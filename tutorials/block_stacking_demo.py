@@ -1,12 +1,12 @@
-import os
+import pybullet as p
+import numpy as np
 from bulletarm import env_factory
 
 def runDemo():
+    p.connect(p.DIRECT) 
     env_config = {
         'render': True,
-        'physics_mode': 'direct',
-        'render_mode': 'gui',
-        'robot_model_path': r"C:\Users\dtira_8wmp3o\BulletArm\bulletarm\pybullet\urdf\kuka\kuka_with_gripper2.sdf"
+        'render_mode': 'gui'
     }
 
     try:
@@ -20,7 +20,11 @@ def runDemo():
         if hasattr(env_runner, 'env'):
             env = env_runner.env
             print("Actual environment inside env_runner:", env)
-            print("Available attributes in actual env:", dir(env))
+            print("Available methods in env:", dir(env))
+            print("action_space content:", env.action_space)  
+
+            if hasattr(env, 'action_shape'):
+                print("Expected action shape:", env.action_shape)  
 
             if not hasattr(env, 'num_solver_iterations'):
                 env.num_solver_iterations = 150
@@ -36,9 +40,20 @@ def runDemo():
 
         obs = env.reset()
         done = False
+
         while not done:
-            action = env.getNextAction()
-            obs, reward, done, _ = env.step(action)
+            action_space_np = np.array(env.action_space)
+            action = action_space_np[np.random.choice(action_space_np.shape[0])]
+
+            if action.shape[0] > 2:
+                action = action[:2]  
+            elif action.shape[0] < 2:
+                raise ValueError(f"Selected action is too short: {action}, shape: {action.shape}")
+
+            print("Using action:", action, "Shape:", action.shape)  #debugging output
+            print("Expected action input format:", type(action), action.shape)
+
+            obs, reward, done, _ = env.step(action) 
 
     except Exception as e:
         print(f"Execution error: {str(e)}")
