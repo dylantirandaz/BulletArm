@@ -1,9 +1,12 @@
 import pybullet as p
 import numpy as np
+import inspect
+import traceback
 from bulletarm import env_factory
 
 def runDemo():
-    p.connect(p.DIRECT) 
+    p.connect(p.DIRECT)  # Set PyBullet to direct mode
+
     env_config = {
         'render': True,
         'render_mode': 'gui'
@@ -21,18 +24,12 @@ def runDemo():
             env = env_runner.env
             print("Actual environment inside env_runner:", env)
             print("Available methods in env:", dir(env))
-            print("action_space content:", env.action_space)  
 
-            if hasattr(env, 'action_shape'):
-                print("Expected action shape:", env.action_shape)  
+            if hasattr(env, "action_space"):
+                print("Action space details:", env.action_space)
 
-            if not hasattr(env, 'num_solver_iterations'):
-                env.num_solver_iterations = 150
-                print("Manually set num_solver_iterations = 150")
-
-            if not hasattr(env, 'solver_residual_threshold'):
-                env.solver_residual_threshold = 1e-5
-                print("Manually set solver_residual_threshold = 1e-5")
+            print("Step function signature:", inspect.signature(env.step))  
+            print("Step function documentation:", env.step.__doc__)  
 
         else:
             print("ERROR: `env_runner` does not contain an environment instance.")
@@ -42,18 +39,43 @@ def runDemo():
         done = False
 
         while not done:
-            action_space_np = np.array(env.action_space)
-            action = action_space_np[np.random.choice(action_space_np.shape[0])]
+            # Generate a valid action based on action space
+            if hasattr(env, "action_space"):
+                action = env.action_space.sample()
+            else:
+                action = np.array([0.5, -0.2, 3.14])  # Fallback action
 
-            if action.shape[0] > 2:
-                action = action[:2]  
-            elif action.shape[0] < 2:
-                raise ValueError(f"Selected action is too short: {action}, shape: {action.shape}")
+            # Ensure action is in the correct format
+            if isinstance(action, int):
+                action = [action]  # Convert single int into a list
+            elif isinstance(action, tuple):
+                action = list(action)  # Convert tuple into a list
+            elif isinstance(action, dict):
+                action = action  # Use as is
+            else:
+                action = np.array(action)  # Convert to numpy array
 
-            print("Using action:", action, "Shape:", action.shape)  
-            print("Expected action input format:", type(action), action.shape)
+            print("Trying action:", action, "Type:", type(action))
 
-            obs, reward, done, _ = env.step(action) 
+            try:
+                obs, reward, done = env.step(action)  
+            except Exception as e1:
+                print("Error in step():", e1)
+                traceback.print_exc()
+
+                print("Trying action as dictionary...")
+                try:
+                    obs, reward, done = env.step({"action": action})
+                except Exception as e2:
+                    print("Error using dictionary:", e2)
+                    traceback.print_exc()
+
+                    print("Trying action as tuple...")
+                    try:
+                        obs, reward, done = env.step((action,))
+                    except Exception as e3:
+                        print("Error using tuple:", e3)
+                        traceback.print_exc()
 
     except Exception as e:
         print(f"Execution error: {str(e)}")
