@@ -50,7 +50,7 @@ def runDemo():
             elif action.shape[0] < 2:
                 raise ValueError(f"Selected action is too short: {action}, shape: {action.shape}")
 
-            print("Using action:", action, "Shape:", action.shape)  #debugging output
+            print("Using action:", action, "Shape:", action.shape)  
             print("Expected action input format:", type(action), action.shape)
 
             obs, reward, done, _ = env.step(action) 
