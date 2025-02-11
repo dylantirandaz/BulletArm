@@ -5,7 +5,7 @@ import traceback
 from bulletarm import env_factory
 
 def runDemo():
-    p.connect(p.DIRECT)
+    #p.connect(p.DIRECT) UNCOMMENT THIS TO RUN WITHOUT BROWSER AND NO GUI 
 
     env_config = {
         'render': True,
