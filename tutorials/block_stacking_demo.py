@@ -13,7 +13,6 @@ def runDemo():
     }
 
     try:
-        # vreating the environment (single-process version)
         env_runner = env_factory.createSingleProcessEnv(env_type='block_stacking', env_config=env_config)
         print("Environment instance:", env_runner)
 
@@ -39,7 +38,6 @@ def runDemo():
         done = False
 
         while not done:
-            #[motion_primitive, x, y, z, rot]
             motion_primitive = np.random.choice([0, 1, 2])
             params = np.random.uniform(low=-1.0, high=1.0, size=(4,))
             action = np.concatenate(([motion_primitive], params))
